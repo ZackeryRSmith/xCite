@@ -1,5 +1,5 @@
 from Config import *
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5 import QtWidgets
 
 import CitationManagement
 import LabeledWidgets
@@ -18,7 +18,6 @@ class FormattedDisplay(QtWidgets.QWidget):
         self.applyFilters.getWidget().toggled.connect(self.updateDisplay)
 
         self.entryOutputType = LabeledWidgets.LabeledComboBox("ENOPT", "Output Order:", ["Alphabetical","Database Order"], DefaultCitationFormatOutputTypeWidth)
-
 
         widgetLayout.addWidget(self.textBrowser)
         widgetLayout.addWidget(self.citationFormatOutputType)
@@ -59,7 +58,6 @@ class FormattedDisplay(QtWidgets.QWidget):
             self.textBrowser.setPlainText("")
 
 
-
     def setMLAFormat(self, enableFilter, alpha):
         self.textBrowser.setHtml("".join(["<p style=\"text-indent:-%dpx;margin-left: %dpx;\">"%(DefaultCitationFormatOutdentation, DefaultCitationFormatOutdentation)+i+"</p>" for i in CitationManagement.mainCiteManager.getMLAFormattedListString(filtersEnabled=enableFilter, alphabetical=alpha).split("\n")]))
 
@@ -67,10 +65,11 @@ class FormattedDisplay(QtWidgets.QWidget):
     def setAPAFormat(self, enableFilter, alpha):
         self.textBrowser.setHtml("".join(["<p style=\"text-indent:-%dpx;margin-left: %dpx;\">"%(DefaultCitationFormatOutdentation, DefaultCitationFormatOutdentation)+i+"</p>" for i in CitationManagement.mainCiteManager.getAPAFormattedListString(filtersEnabled=enableFilter, alphabetical=alpha).split("\n")]))
 
+
     def setIEEEFormat(self, enableFilter, alpha):
         self.textBrowser.setHtml("".join(["<p style=\"text-indent:-%dpx;margin-left: %dpx;\">"%(DefaultCitationFormatOutdentation, DefaultCitationFormatOutdentation)+i+"</p>" for i in CitationManagement.mainCiteManager.getIEEEFormattedListString(filtersEnabled=enableFilter, alphabetical=alpha).split("\n")]))
+
 
     def setHTMLString(self, htmlStr):
         self.textBrowser.setHtml(htmlStr)
         #self.textBrowser.setHtml(CitationManagement.mainCiteManager.getMLAFormattedListString().replace("\n","<br><br>"))
-

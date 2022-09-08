@@ -1,6 +1,6 @@
-import sys, datetime
+import datetime
 from Config import *
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 def getWidgetByID(ID):
     return LabeledWidgetsDict[ID]
@@ -30,6 +30,7 @@ class LabeledBoxGrid(QtWidgets.QWidget):
 
         #self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Minimum)
 
+
     def redrawBox(self):
         for i in self.widgetDict.keys():
             self.glay.removeWidget(i)
@@ -38,29 +39,34 @@ class LabeledBoxGrid(QtWidgets.QWidget):
             self.glay.addItem(self.vspacer, i+1, self.maxCols+1)
 
         for i in self.widgetDict.keys():
-            x=self.widgetDict[i][1]
-            y=self.widgetDict[i][0]
+            x, y = (self.widgetDict[i][1], self.widgetDict[i][0])
 
             self.glay.addWidget(i,y,x)
-            
+
+
     def indexFromRowCol(self, row, col):
         return "%d,%d"%(row,col)
+
 
     def rowColFromIndex(self, index):
         # Returns a list [row, col]
         return [int(i) for i in index.split(",")]
 
+
     def getCurrentShownWidgetInSlot(self, row, col):
         return self.widgetDict2[self.indexFromRowCol(row,col)][0]
 
+
     def getAllWidgetsInSlot(self, row, col):
         return self.widgetDict2[self.indexFromRowCol(row,col)]
+
 
     def swapWidgetShowInSlot(self, row, col):
         l=self.widgetDict2[self.indexFromRowCol(row,col)]
         l[0].hide()
         l.append(l.pop(0))
         l[0].show()
+
 
     def addWidget(self, row, col, widget):
         self.widgetDict[widget]=(row,col)
@@ -70,7 +76,8 @@ class LabeledBoxGrid(QtWidgets.QWidget):
             widget.hide()
 
         self.redrawBox()
-    
+
+
     def removeWidget(self, widget):
         self.glay.removeWidget(widget)
         removedWidget=self.widgetDict.pop(widget)
@@ -79,7 +86,6 @@ class LabeledBoxGrid(QtWidgets.QWidget):
                 self.widgetDict2[i].pop(self.widgetDict2.index(removedWidget))
                 if self.widgetDict2[i]:
                     self.widgetDict2[i][0].show()
-
 
         self.redrawBox()
         return removedWidget
@@ -108,15 +114,12 @@ class LabeledWidget(QtWidgets.QWidget):
         self.label = QtWidgets.QLabel(labelText)
         self.label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
 
-
         if fixedLabelWidth:
             self.setLabelWidth(fixedLabelWidth)
-
 
         self.widget = QtWidgets.QWidget()
 
         LabeledWidgetsDict[self.ID] = self
-
 
         if fixedWidgetWidth:
             self.fixedWidgetWidth=fixedWidgetWidth
@@ -144,23 +147,29 @@ class LabeledWidget(QtWidgets.QWidget):
             
         self.hlayout.addWidget(self.widget)
 
+
     def getWidget(self):
         return self.widget
+
 
     def getID(self):
         return self.ID
 
+
     def setLabelWidth(self, width):
         self.label.setFixedWidth(width)
-    
+
+
     def setLabelText(self, labelText=None):
         if labelText is None:
             labelText=self.labelTextString
         self.labelTextString = labelText
         self.label.setText(self.__labelTextFormat(labelText))
 
+
     def getLabelText(self):
         return self.label.text()
+
 
     def __labelTextFormat(self, text):
         newStr = text
@@ -174,31 +183,38 @@ class LabeledWidget(QtWidgets.QWidget):
         if self.__warning:
             newStr = f"<font color={WARNING_COLOR}><h3>" + newStr + "</h3></font>"
 
-
         return newStr
+
 
     def setWarningOn(self, warningOn=True):
         self.__warning = warningOn
         self.setLabelText()
 
+
     def setWarningOff(self, warningOff=True):
         self.setWarningOn(not warningOff)
+
 
     def isWarningOn(self):
         return self.__warning
 
+
     def isWarningOff(self):
         return not self.__warning
+
 
     def setNoteOn(self, noteOn=True):
         self.__note = noteOn
         self.setLabelText()
 
+
     def setNoteOff(self, noteOff=True):
         self.setNoteOn(not noteOff)
 
+
     def isNoteOn(self):
         return self.__note
+
 
     def isNoteOff(self):
         return not self.__note
@@ -208,11 +224,14 @@ class LabeledWidget(QtWidgets.QWidget):
         self.__important = importantOn
         self.setLabelText()
 
+
     def setImportantOff(self, importantOff=True):
         self.setImportantOn(not importantOff)
 
+
     def isImportantOn(self):
         return self.__important
+
 
     def isImportantOff(self):
         return not self.__important
@@ -221,27 +240,33 @@ class LabeledWidget(QtWidgets.QWidget):
     def setWidgetWidth(self, width):
         self.widget.setFixedWidth(width)
 
+
     def enableCheckBox(self):
         self.checkBox.show()
+
 
     def disableCheckBox(self):
         self.checkBox.hide()
 
+
     def isCheckBoxChecked(self):
         return self.checkBox.isChecked()
 
+
     def checkToggle(self, e=None):
-        if e:
-            self.widget.setDisabled(False)
-        else:
-            self.widget.setDisabled(True)
+        self.widget.setDisabled(False if e else True)
+        #if e:
+        #    self.widget.setDisabled(False)
+        #else:
+        #    self.widget.setDisabled(True)
+
 
     def isWarning(self):
         return self.__warning
 
+
     def getContent(self):
         pass
-
 
 
 class LabeledSpinBox(LabeledWidget):
@@ -282,16 +307,17 @@ class LabeledSpinBox(LabeledWidget):
         self.spinBox.valueChanged(int i)
         '''
 
+
     def getValueOfSpinBox(self):
         return self.spinBox.value()
+
 
     def setValueOfSpinBox(self, value):
         self.spinBox.setValue(int(value))
 
+
     def getContent(self):
         return self.getValueOfSpinBox()
-
-
 
 
 class LabeledCalendarWidget(LabeledWidget):
@@ -335,13 +361,16 @@ class LabeledCalendarWidget(LabeledWidget):
         if fixedCalendarWidth:
             self.setCalendarWidth(fixedWidth)
 
+
     def setDateFormatMode(self, dateFormatMode=0):
         assert(0 <= dateFormatMode < len(self.formats))
         self.calendar.setDisplayFormat(self.formats[dateFormatMode])
 
+
     def getContent(self):
         cal = self.calendar.dateTime().toString("MM/dd/yyyy")
         return cal
+
 
     def setContent(self, dateStr):
         if dateStr == "":
@@ -360,17 +389,12 @@ class LabeledCalendarWidget(LabeledWidget):
                 year = datetime.datetime.today().year
                 dateStr[2]=year
 
-
             self.calendar.setDateTime(datetime.datetime(dateStr[2],dateStr[0],dateStr[1]))
-
-        
-        
 
 
 class LabeledComboBox(LabeledWidget):
     def __init__(self, ID, labelText="Combo Box: ", comboChoiceList=[], fixedLabelWidth=None, fixedComboBoxWidth=None, parent=None):
         super().__init__(ID, labelText, fixedLabelWidth, fixedComboBoxWidth, parent)
-
 
         self.comboBox = QtWidgets.QComboBox()
 
@@ -399,17 +423,22 @@ class LabeledComboBox(LabeledWidget):
         self.comboBox.textHighlighted 
         '''
 
+
     def printComboID(self, e=None):
         print(str(e),self.comboBox.currentText(), self.comboBox.currentIndex())
+
 
     def getContent(self):
         return self.comboBox.currentText()
 
+
     def getIndex(self):
         return self.comboBox.currentIndex()
 
+
     def setContent(self, index):
         self.comboBox.setCurrentIndex(int(index))
+
 
 class LabeledTextBox(LabeledWidget):
     def __init__(self, ID, labelText="Text Goes Here", fixedLabelWidth=None, fixedTextInputWidth=None, maxLengthOfInput=None, parent=None):
@@ -425,12 +454,10 @@ class LabeledTextBox(LabeledWidget):
         if fixedTextInputWidth:
             self.setTextInputWidth(fixedTextInputWidth)
 
-
         if self.maximumLengthOfInput:
             self.textInput.setMaxLength(self.maximumLengthOfInput)
 
         self.setContent = self.setText
-
 
         '''
         self.textInput.textChanged.connect(lambda: print(self.textInput.text()))
@@ -445,22 +472,27 @@ class LabeledTextBox(LabeledWidget):
         textEdited(const QString &text)
         '''
 
+
     def getText(self):
         return self.textInput.text()
+
 
     def setText(self, newText):
         self.textInput.setText(newText)
 
+
     def setMaxLengthOfInput(self, maxLengthOfInput):
         self.maximumLengthOfInput = maxLengthOfInput
-        self.textInput.setMaxLength(maximumLengthOfInput)
+        self.textInput.setMaxLength(self.maximumLengthOfInput)
+        #self.textInput.setMaxLength(maximumLengthOfInput)
+
 
     def getMaxLengthOfInput(self):
         return self.maximumLengthOfInput
 
+
     def getContent(self):
-        return self.getText()
-        
+        return self.getText()        
 
 
 class AuthorTable(QtWidgets.QWidget):
@@ -532,12 +564,13 @@ class AuthorTable(QtWidgets.QWidget):
     def getTable(self):
         return self.table
 
+
     def getAuthorDictionary(self):
         # A dictionary of dictionaries
         d = {}
 
         c=0
-        for i in range( self.numberOfAuthors ):
+        for i in range(self.numberOfAuthors):
             row=self.getRowAsList(i)
             if row != ['','','']:
                 d[c]={}
@@ -555,19 +588,19 @@ class AuthorTable(QtWidgets.QWidget):
 
         return d
 
+
     def getAuthorDictKeys(self):
         return [i for i in self.authorDictionary.keys()]
 
+
     def getRowAsList(self, row):
         assert(row < self.numberOfAuthors)
-        t=[]
-
-        for i in range(3):
-            if self.table.item(row,i):
-                t.append(self.table.item(row, i).text())
-            else:
-                t.append("")
-
+        t = [self.table.item(row, i).text() if self.table.item(row, i) else "" for i in range(3)]
+        #for i in range(3):
+        #    if self.table.item(row,i):
+        #        t.append(self.table.item(row, i).text())
+        #    else:
+        #        t.append("")
         return t
 
 
@@ -687,11 +720,12 @@ class AuthorTable(QtWidgets.QWidget):
         self.table.setRowCount(self.numberOfAuthors)
 
         self.table.clearContents()
-        
-        if numberOfAuthors > 1:
-            self.tableLable.setText("Authors:")
-        else:
-            self.tableLable.setText("Author:")
+
+        self.tableLable.setText(f'Author{"s" if numberOfAuthors > 1 else ""}:')
+        #if numberOfAuthors > 1:
+        #    self.tableLable.setText("Authors:")
+        #else:
+        #    self.tableLable.setText("Author:")
 
 
         for row in range(self.numberOfAuthors):
@@ -706,14 +740,14 @@ class AuthorTable(QtWidgets.QWidget):
                 self.setRowByList(i, ['','',''])
 
 
-
-
     def getNumberOfAuthors(self):
         return self.numberOfAuthors
+
 
     def resizeEvent(self,e=None):
         #print("Resized!")
         self.table.setCurrentCell(0,0)
+
 
     def deleteTextInCurrentCell(self):
         for i in self.table.selectedItems():
@@ -761,6 +795,7 @@ class AuthorTable(QtWidgets.QWidget):
                 self.table.clearSelection()
                 self.table.setCurrentCell(row%self.numberOfAuthors, col)
 
+
     def backtabLastCelltoNextChildWidget(self):
         if self.table==self.parent().focusWidget():
             if self.table.currentRow() == 0 and self.table.currentColumn() == 0:
@@ -777,8 +812,10 @@ class AuthorTable(QtWidgets.QWidget):
 
                 self.table.setCurrentCell(row%self.numberOfAuthors, col)
 
+
     def setNextWidgetInTabSequence(self, widget):
         self.nextWidgetInTabSequence = widget
+
 
     def setLastWidgetInTabSequence(self, widget):
         self.lastWidgetInTabSequence = widget
@@ -794,5 +831,3 @@ class AuthorTable(QtWidgets.QWidget):
         # Resize middle initial column to be smaller and stretch fill to end.
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
-
-

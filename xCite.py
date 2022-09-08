@@ -9,8 +9,6 @@ Created: 8/17/2022
 
 '''
 
-from core.MainApp import *
+from core.MainApp import main
 
-
-main() 
-
+if __name__ == "__main__": main()

@@ -1,9 +1,8 @@
-import datetime
 from Config import *
 import LabeledWidgets
 
 import CitationManagement
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5 import QtWidgets
 
 CitMan = CitationManagement.mainCiteManager
 
@@ -255,8 +254,7 @@ class RecordList(QtWidgets.QTreeWidget):
 
         item = self.currentItem()
 
-        if not item:
-            return 
+        if not item: return 
         parentItem = None
         if item.parent():
             parentItem = item.parent()
@@ -273,4 +271,3 @@ class RecordList(QtWidgets.QTreeWidget):
         self.refreshText()
             
         #SharedObjects[INPUT].setCurrentCitation(CitationManagement.mainCiteManager.getCitationByID(index))
-

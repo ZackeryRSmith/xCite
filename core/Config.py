@@ -1,4 +1,3 @@
-from random import choice
 import datetime
 
 AcceptableNameChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'-. "
@@ -32,7 +31,7 @@ AUTHT = "AUTHT" # Author table
 INPUT = "INPUT" # Input Form
 
 # Record Sheet filters
-TYPEF = "TYPEF"  # Type of entry filter - Book, paper, article
+TYPEF = "TYPEF" # Type of entry filter - Book, paper, article
 FILTI = "FILTI" # Title Filter
 FILLN = "FILLN" # Last Name Filter
 FILFN = "FILFN" # First Name Filter
@@ -155,4 +154,3 @@ Date Formats:
     12. 2022-01-02
     13. 2022-1-2
 '''
-

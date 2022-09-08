@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import datetime
 from Config import *
 import LabeledWidgets
@@ -15,8 +13,7 @@ class InputForm(QtWidgets.QWidget):
         self.output = None
         self.currentCitation = None #CitationManagement.generateEmptyCitationDictionary()
 
-        SharedObjects[INPUT] = self
-        
+        SharedObjects[INPUT] = self        
 
         mainLayout = QtWidgets.QVBoxLayout()
 
@@ -30,7 +27,6 @@ class InputForm(QtWidgets.QWidget):
         self.lineSeparator.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
         #self.lineSeparator.setFixedWidth(600)
         #self.lineSeparator.setFixedHeight(20)
-
         
         self.saveRecordButton = QtWidgets.QPushButton("Save Record")
         self.cancelButton = QtWidgets.QPushButton("Clear Changes")
@@ -42,14 +38,12 @@ class InputForm(QtWidgets.QWidget):
         self.autoSaveCheck.hide()
         SharedObjects[ATOSV] = self.autoSaveCheck
 
-
         # Prepare the content type combobox and set it to have the initial focus since it will be the first category
         self.contentTypeComboBoxInput = LabeledWidgets.LabeledComboBox(TYPE, "Type of Content:", [TYPE_ARTICLE, TYPE_BOOK, TYPE_CONFERENCE_PAPER], DefaultLabelWidthColA)
         self.contentTypeComboBoxInput.comboBox.currentIndexChanged.connect(self.contentTypeSwitch)
         self.contentTypeComboBoxInput.comboBox.setCurrentIndex(0)
         
         #self.contentTypeComboBoxInput.getComboBox().setFocus()
-
 
         # Create appropriate content inputs for all the boxes
         self.titleInput = LabeledWidgets.LabeledTextBox(TITLE,"Title:")
@@ -79,7 +73,6 @@ class InputForm(QtWidgets.QWidget):
         self.titleAndContentLayout = QtWidgets.QHBoxLayout()
         self.titleAndContentLayout.addWidget(self.titleInput)
         self.titleAndContentLayout.addWidget(self.contentTypeComboBoxInput)
-
 
 
         self.formColumnLayout = LabeledWidgets.LabeledBoxGrid(2,6)
@@ -124,21 +117,13 @@ class InputForm(QtWidgets.QWidget):
         #self.publishedYearSpinBox.enableCheckBox()
         #self.publishDateEdit.enableCheckBox()
 
-
         self.saveRecordButton.clicked.connect(lambda e: [self.saveCurrentCitation(), LabeledWidgetsDict[RECRD].getWidget().setCurrentCitations()])
-
 
         self.cancelButton.clicked.connect(lambda e: self.setCurrentCitation(self.currentCitation))
 
         self.newRecordButton.clicked.connect(lambda e: [self.saveCurrentCitation(), self.setCurrentCitation(CiteMan.newCitation())])
 
         self.deleteRecordButton.clicked.connect(lambda e: [CiteMan.removeCitation(self.currentCitation), LabeledWidgetsDict[RECRD].getWidget().setCurrentCitations(), self.setCurrentCitation(CiteMan.citations[0]) ])
-
-
-
-        #TABORDERING
-
-        
 
         self.setLayout(mainLayout)
         self.show()
@@ -163,11 +148,12 @@ class InputForm(QtWidgets.QWidget):
                 self.authorTable.backtabLastCelltoNextChildWidget()
                 return True
 
-        return False
-        
-    
+        return False        
+
+
     def resizeEvent(self, event=None):
         self.authorTable.resizeColumnsProportionally()
+
 
     def keyPressEvent(self, e):
         #print(e.key())
@@ -185,11 +171,13 @@ class InputForm(QtWidgets.QWidget):
             self.focusNextChild()
         '''
 
+
     def __clearSpecialFormats(self):
         for i in LabeledWidgetsDict:
             if i not in [AUTHT]:
                 LabeledWidgetsDict[i].setWarningOff()
                 LabeledWidgetsDict[i].setNoteOff()
+
 
     def saveCurrentCitation(self, nextCitation=None):
         #LabeledWidgetsDict[TITLE].setWarningOff()
@@ -247,7 +235,6 @@ class InputForm(QtWidgets.QWidget):
                     dictOfValues[LabeledWidgets.PBLDT] = monthDayYear[0]+"/00/" + monthDayYear[2]
 
         return dictOfValues
-
 
 
     def contentTypeSwitch(self, e=None):
@@ -356,9 +343,3 @@ class InputForm(QtWidgets.QWidget):
                         LabeledWidgets.getWidgetByID(PBLDF).setContent(3)
 
                 LabeledWidgets.getWidgetByID(PBLDT).setContent(citation.getPublishingDate())
-
-
-
-
-
-

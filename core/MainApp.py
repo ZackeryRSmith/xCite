@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import sys
 sys.path.insert(0, './core')
 
@@ -12,12 +10,12 @@ from About import About
 
 import CitationManagement
 
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5 import QtCore, QtWidgets
 
-FOR_WINDOWS = True
+FOR_WINDOWS = True  # ???
 
-# This will be the master window the application.
 class MainWindow(QtWidgets.QMainWindow):
+    '''Master window for xCite'''
     def __init__(self, appWidget=None):
         super().__init__()
         self.app = appWidget
@@ -139,18 +137,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
         '''
 
+
     def openModifyTab(self):
         self.tabInputCitation.setCurrentIndex(0)
+
 
     def openCitationTab(self):
         self.tabInputCitation.setCurrentIndex(1)
 
+
     def openFile(self):
         #fileName = QtWidgets.QFileDialog.getOpenFileName(self, "Open xCite Database","./User Databases","xCite Database File (.xct)")
-        if FOR_WINDOWS:
-            fileName = QtWidgets.QFileDialog.getOpenFileName(self, "Open xCite Database","./User Databases")
-        else:
-            fileName = QtWidgets.QFileDialog.getOpenFileName(self, "Open xCite Database","./User Databases","xCite Database File (.xct)")
+        fileName = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Open xCite Database", "./User Databases", "xCite Database File(.xct)" if not FOR_WINDOWS else "")
         print("File:",fileName)
 
         if fileName[0]:
@@ -161,21 +160,17 @@ class MainWindow(QtWidgets.QMainWindow):
             self.setWindowTitle("xCite Citation Manager - %s"%(fileName[0].split("/")[-1]))
             self.updateCitations()
 
+
     def saveFile(self):
         if self.__currentFile:
             if CitationManagement.mainCiteManager.containsOneValidRecord():
                 SharedObjects[INPUT].saveCurrentCitation()
                 CitationManagement.mainCiteManager.writeCitationsToDatabase(self.__currentFile)
             else:
-                emptyF = open(DefaultCleanFile,'r')
-                emptyFText = emptyF.read()
-                emptyF.close()
-
-                currentF = open(self.__currentFile, 'w')
-                currentF.write(emptyFText)
-                currentF.close()
-                
-
+                with open(DefaultCleanFile) as emptyF:
+                    emptyFText = emptyF.read()
+                with open(self.__currentFile, "w") as currentF:
+                    currentF.write(emptyFText)
 
         else:
             #fileName = QtWidgets.QFileDialog.getSaveFileName(self, "Save xCite Database","./User Databases","xCite Database File (.xct)")
@@ -192,34 +187,28 @@ class MainWindow(QtWidgets.QMainWindow):
                 if CitationManagement.mainCiteManager.containsOneValidRecord():
                     CitationManagement.mainCiteManager.writeCitationsToDatabase(self.__currentFile)
                 else:
-                    emptyF = open(DefaultCleanFile,'r')
-                    emptyFText = emptyF.read()
-                    emptyF.close()
-
-                    currentF = open(self.__currentFile, 'w')
-                    currentF.write(emptyFText)
-                    currentF.close()
+                    with open(DefaultCleanFile) as emptyF:
+                        emptyFText = emptyF.read()
+                    with open(self.__currentFile, "w") as currentF:
+                        currentF.write(emptyFText)
                     
         self.setWindowTitle("xCite Citation Manager - %s"%(self.__currentFile.split("/")[-1]))
 
+
     def saveAsFile(self):
         if self.__currentFile:
-            if FOR_WINDOWS:
-                fileName = QtWidgets.QFileDialog.getSaveFileName(self, "Save xCite Database As",self.__currentFile)
-            else:
-                fileName = QtWidgets.QFileDialog.getSaveFileName(self, "Save xCite Database As",self.__currentFile,"xCite Database File (.xct)")
-            #fileName = QtWidgets.QFileDialog.getSaveFileName(self, "Save xCite Database As",self.__currentFile,"xCite Database File (.xct)")
+            fileName = QtWidgets.QFileDialog.getSaveFileName(
+                self, "Save xCite Database As", self.__currentFile, "xCite Database File(.xct)" if not FOR_WINDOWS else "")
         else:
-            if FOR_WINDOWS:
-                fileName = QtWidgets.QFileDialog.getSaveFileName(self, "Save xCite Database As","./User Databases/NewDatabase.xct")
-            else:
-                fileName = QtWidgets.QFileDialog.getSaveFileName(self, "Save xCite Database As","./User Databases/NewDatabase.xct","xCite Database File (.xct)")
+            fileName = QtWidgets.QFileDialog.getSaveFileName(
+                self, "Save xCite Database As", "./User Databases/NewDatabase.xct", "xCite Database File(.xct)" if not FOR_WINDOWS else "")
             #fileName = QtWidgets.QFileDialog.getSaveFileName(self, "Save xCite Database As","./User Databases/NewDatabase.xct","xCite Database File (.xct)")
 
             
         if fileName[0]:
             self.__currentFile = fileName[0]
             self.saveFile()
+
 
     def newFile(self):
         if FOR_WINDOWS:
@@ -234,19 +223,19 @@ class MainWindow(QtWidgets.QMainWindow):
             SharedObjects[INPUT].setCurrentCitation(CitationManagement.mainCiteManager.getCitationByID(0))
             self.__currentFile = fileName[0]
             self.setWindowTitle("xCite Citation Manager - %s"%(fileName[0].split("/")[-1]))
-            
+
+
     def aboutXcite(self):
         ab=About(self)
         ab.setWindowModality(QtCore.Qt.WindowModality.WindowModal)
         ab.setWindowTitle("About xCite")
         ab.show()
             
-        
-
 
     def setMessageBox(self, message, bold=None, italic=False, underline=None, color=None, append=False):
         newStr = message
 
+        # Could be improved?
         if bold:
             newStr = "<b>"+newStr+"</b>"
         if italic:
@@ -268,10 +257,6 @@ class MainWindow(QtWidgets.QMainWindow):
         #QtWidgets.QTextBrowser.set
 
 
-
-
-
-
 def main():
     app = QtWidgets.QApplication(sys.argv)
 
@@ -279,4 +264,3 @@ def main():
     window.show()
 
     sys.exit(app.exec_())
-

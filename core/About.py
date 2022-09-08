@@ -1,6 +1,4 @@
-import Config
-
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5 import QtWidgets
 
 
 class About(QtWidgets.QDialog):
@@ -9,7 +7,23 @@ class About(QtWidgets.QDialog):
 
         mainLayout = QtWidgets.QVBoxLayout()
 
-        htmlString="<html><head/><body><p align=\"center\"><span style=\" font-size:28pt; font-weight:600;\">xCite Citation Manager</span></p><p align=\"center\"><br/></p><p align=\"center\">Developed By: Benjamin Atkerson, 2022</p><p><br/>Contributors:</p><p>Ward, Alex -</p><p>Atkerson, Benjamin -</p><p>Buckley, David -</p><p>Chabre, Derek -</p><p>Glazier, Leah -</p></body></html>"
+        htmlString = """
+<html>
+    <head/>
+    <body>
+        <p align="center"><span style=" font-size:28pt; font-weight:600;">xCite Citation Manager</span></p>
+        <p align="center"><br/></p>
+        <p align="center">Developed By: Benjamin Atkerson, 2022</p>
+        <p><br/>Contributors:</p>
+        <p>Ward, Alex -</p>
+        <p>Atkerson, Benjamin -</p>
+        <p>Buckley, David -</p>
+        <p>Chabre, Derek -</p>
+        <p>Glazier, Leah -</p>
+        <p>Smith, Zackery -</p>
+    </body>
+</html>
+"""
 
 
 
@@ -23,4 +37,3 @@ class About(QtWidgets.QDialog):
 
         self.setFixedSize(600,400)
         self.show()
-

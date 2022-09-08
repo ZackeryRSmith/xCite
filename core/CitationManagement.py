@@ -1,8 +1,14 @@
 import datetime
-
 from Config import *
 
+
 def generateEmptyCitationDictionary():
+    '''
+    Generate an empty citation dictionary
+
+    Returns:
+        emptyDict: An empty citation dictionary
+    '''
     emptyDict = {TYPE  : DefaultTypeOfContent,  
                  TITLE : "", 
                  AUTHT : {0:{LNAME : "", FNAME : "", MINIT : ""}},
@@ -19,12 +25,35 @@ def generateEmptyCitationDictionary():
 
     return emptyDict
 
+
 ###################################################################################
 #               Citation Class
 ###################################################################################
 
 class CitationManager():
-    def __init__(self):
+    '''The citation manager object
+
+    Attributes:
+        output                (???)           : 
+                ...
+        citationIDCount       (int)           : 
+                Tracks the number of citations, usful for ...
+        citations             (list)          : 
+                An up-to-date list of all citations
+        headers               (list)          : 
+                ...
+        permanentCitationDict (dict)          : 
+                ...
+        removedCitations      (dict)          : 
+                A list of removed citations, cleans on starting a new xCite session
+        currentFile           (TextIOWrapper) : 
+                A TextIOWrapper object (a file) refrencing a buffered text stream (or in other terms a file's content)
+        appliedFilters        (dict)          : 
+                A dict containing all given filter information
+        filtersEnabled        (bool)          : 
+                True or False value for storing the state of the filters (on or off)
+    '''
+    def __init__(self, debug=False):
         self.output = None
         self.citationIDCount = -1
         self.citations = []
@@ -43,30 +72,65 @@ class CitationManager():
 
         self.filtersEnabled=False
 
+        self.debug = debug
+
+
     def setFiltersEnabled(self, enabled=True):
+        '''Enable filters on the record viewer'''
         self.filtersEnabled = enabled
 
+
     def getFiltersEnabled(self):
+        '''Gets the current state of filters (on or off)
+
+        Returns:
+            self.filtersEnabled: A boolean value
+        '''
         return self.filtersEnabled
 
+
     def setFilter(self, ftype, value):
+        '''Set the value of a filter
+        
+        Args:
+            ftype (str) : The type of filter
+            value (str) : The value to apply to refrenced filter
+        '''
         assert ftype in self.appliedFilters, "Not a valid filter type"
         self.appliedFilters[ftype] = value
 
+
     def getFilter(self, ftype):
+        '''Get the value of a filter
+        
+        Args:
+            ftype (str) : The type of filter
+        '''
         assert ftype in self.appliedFilters, "Not a valid filter type"
         return self.appliedFilters[ftype]
 
 
     def setOutput(self, output):
+        '''???
+
+        Args:
+            output (???) : ...
+        '''
         self.output = output
         for i in self.permanentCitationDict:
-            self.permanentCitationDict[i].output=output
+            self.permanentCitationDict[i].output = output
+
 
     def readInDatabaseFromFile(self, file=None, newfile=False, template=False):
-        '''
-        Reads all the contents from the database file and stores them into instances of
-        the citation class.
+        '''Reads the contents from the database file and stores them into instances of the citation class.
+
+        Args:
+            file     (TextIOWrapper) :
+                    Database to read from
+            newFile  (bool)          :
+                    ...
+            template (bool)          :
+                    ...
         '''
         self.citationIDCount = -1
         self.citations = []
@@ -80,24 +144,19 @@ class CitationManager():
         print("FILE readin:",file)
 
         if newfile == True:
-            f=open(DefaultCleanFile, 'r')
-            contents = f.read()
-            f.close()
+            with open(DefaultCleanFile) as f:
+                contents = f.read()
         elif template == True:
-            f=open(DefaultTemplateFile, 'r')
-            contents = f.read()
-            f.close()
+            with open(DefaultTemplateFile) as f:
+                contents = f.read()
         else:
-            f=open(file, 'r')
-            contents = f.read()
-            f.close()
+            with open(file) as f:
+                contents = f.read()
             self.currentFile=file
 
-        contents = contents.split('\n')
-        contents = [i.split('\t') for i in contents]
+        contents = [i.split('\t') for i in contents.split('\n')]
         self.headers = contents.pop(0)
         print(contents)
-
 
         citation = None
         currentRecordEmpty = False
@@ -112,13 +171,9 @@ class CitationManager():
                 else:
                     currentRecordEmpty = False
 
-
-
                 citation.setTypeOfContent(i[0])
 
-                if i[1] == "" and firstRecord:
-                    pass
-                else:
+                if not (i[1] == "" and firstRecord):
                     citation.setTitle(i[1])
                 citation.addAuthor(i[2], i[3], i[4])
                 citation.setVolume(i[5])
@@ -133,7 +188,7 @@ class CitationManager():
                         citation.setPublishedYear(i[10])
                     except AssertionError:
                         citation.clearCitationInformation()
-                        print("Publishing year (%s) outside of Valid Date Range"%(i[10]))
+                        print(f"Publishing year ({i[10]}) outside of Valid Date Range")
                         print("Ignoring record")
                         currentRecordEmpty=True
 
@@ -143,7 +198,7 @@ class CitationManager():
                         citation.setPublishingDateByString(i[11])
                     except AssertionError:
                         citation.clearCitationInformation()
-                        print("Publishing date (%s) outside of Valid Date Range"%(i[11]))
+                        print(f"Publishing date ({i[11]}) outside of Valid Date Range")
                         print("Ignoring record")
                         currentRecordEmpty=True
 
@@ -163,6 +218,12 @@ class CitationManager():
 
 
     def writeCitationsToDatabase(self, file=None):
+        '''Write all citations to the database
+
+        Args:
+            file (TextIOWrapper) :
+                    Database to write to
+        '''
         if file == None:
             file = DefaultFileOutput
         contentToWrite = "\t".join(self.headers)+"\n"
@@ -174,13 +235,14 @@ class CitationManager():
             if nonRemovedCitations[i].isCitationSet():
                 contentToWrite += self.permanentCitationDict[i].getCitationStringForDB()
 
-        f = open(file,"w")
-        f.write(contentToWrite)
-        f.close()
+        with open(file, "w") as f:
+            f.write(contentToWrite)
 
-        self.output("Database has been saved to:<br>%s"%(file),append=True)
+        self.output(f"Database has been saved to:<br>{file}")
+
 
     def containsOneValidRecord(self):
+        '''Checks if any citation is a valid record'''
         for i in self.permanentCitationDict:
             if self.permanentCitationDict[i].isCitationSet():
                 return True
@@ -188,16 +250,18 @@ class CitationManager():
 
 
     def __pullNewID(self):
-        # Used for storing citations in dict with unique keys
+        '''Used for storing citations in dict with unique keys'''
         self.citationIDCount += 1
         return self.citationIDCount 
+
 
     def addCitation(self, citation):
         assert isinstance(citation, Citation), "Citation must be given to addCitation!"
         if citation not in self.citations:
-            print('%s added to the citation dictionary.'%(citation))
+            print(f'{citation} added to the citation dictionary.')
             self.citations.append(citation)
             self.permanentCitationDict[self.__pullNewID()]=citation
+
 
     def newCitation(self):
         newCit = None
@@ -213,9 +277,9 @@ class CitationManager():
             newCit = Citation()
             self.addCitation(newCit)
 
-
         newCit.output = self.output
         return newCit
+
 
     def removeCitationByID(self, ID):
         self.removeCitation(self.getCitationByID(ID))
@@ -224,13 +288,14 @@ class CitationManager():
     def removeCitation(self, citation):
         assert isinstance(citation, Citation), "Citation must be given to addCitation!"
         if citation in self.citations and len(self.citations) > 1:
-            indexOfCitation = self.citations.index(citation)
-            self.citations.pop(indexOfCitation)
+            self.citations.pop(self.citations.index(citation))
             citation.citationIsSet = False
             self.removedCitations[self.getIDByCitation(citation)] = citation
 
+
     def restoreCitationByID(self, ID):
         self.restoreCitation(self.getCitationByID(ID))
+
 
     def restoreCitation(self, citation):
         if citation in self.permanentCitationDict.values():
@@ -243,18 +308,12 @@ class CitationManager():
 
     def resetCurrentCitationList(self):
         # Resets the citation list to only show non-removed citations.
-        
-        newCitationList = []
-        for i in sorted(self.permanentCitationDict.keys()):
-            if i not in self.removedCitations:
-                newCitationList.append(self.permanentCitationDict[i])
-        self.citations = newCitationList
+        self.citations = [self.permanentCitationDict[i] for i in sorted(
+            self.permanentCitationDict.keys()) if i not in self.removedCitations]
+
 
     def getNonRemovedCitations(self):
-        nonrem = []
-        for i in self.permanentCitationDict:
-            if i not in self.removedCitations:
-                nonrem.append(i)
+        nonrem = [i for i in self.permanentCitationDict if i not in self.removedCitations]
 
         d = {}
         for i in nonrem:
@@ -269,6 +328,7 @@ class CitationManager():
                     return i
         return -1
 
+
     def getCitationByID(self, ID):
         if ID in self.permanentCitationDict:
             return self.permanentCitationDict[ID]
@@ -278,6 +338,7 @@ class CitationManager():
 
     def getNumberOfCitations(self):
         return len(self.citations)
+
 
     def getPermanentDictOfCitations(self):
         '''
@@ -290,6 +351,7 @@ class CitationManager():
 
         return tempDict
 
+
     def getCurrentDictOfCitations(self):
         '''
         Returns a dict in format {ID: Citation} for all the non-removed items
@@ -300,6 +362,7 @@ class CitationManager():
                 tempDict[i]=self.permanentCitationDict[i]
 
         return tempDict
+
 
     def getCurrentDictOfFilteredCitations(self,overrideEnable=False):
         tempDict = self.getCurrentDictOfCitations()
@@ -314,7 +377,7 @@ class CitationManager():
         middleinit = self.getFilter(FILMI)
         exact = self.getFilter(EXCTF)
 
-
+        # Could be improved?
         if ctype:
             if ctype == 1:
                 tempDict = self.getAllArticles()
@@ -322,7 +385,6 @@ class CitationManager():
                 tempDict = self.getAllBooks()
             elif ctype == 3:
                 tempDict = self.getAllConferencePapers()
-
 
         foundRecords = {i: tempDict[i] for i in tempDict}
 
@@ -335,43 +397,40 @@ class CitationManager():
 
         # If a name filter is applied
         if lastname+middleinit+firstname:
-            keys=[]
-            for i in foundRecords:
-                if foundRecords[i].isAuthorInCitation(lastname, firstname, middleinit, exact):
-                    keys.append(i)
+            keys = [i for i in foundRecords if foundRecords[i].isAuthorInCitation(
+                lastname, firstname, middleinit, exact)]
 
             foundRecords = {i:foundRecords[i] for i in keys}
 
         return foundRecords
 
 
-
-
-
     def getCitationByID(self, ID):
         assert(ID in self.permanentCitationDict)
         return self.permanentCitationDict[ID]
+
 
     def getAllArticles(self):
         curDic = self.getCurrentDictOfCitations()
         return {i:curDic[i] for i in curDic if curDic[i].getTypeOfContent() == TYPE_ARTICLE}
         #return [i for i in self.citations if i.getTypeOfContent() == TYPE_ARTICLE]
 
+
     def getAllBooks(self):
         curDic = self.getCurrentDictOfCitations()
         return {i:curDic[i] for i in curDic if curDic[i].getTypeOfContent() == TYPE_BOOK}
         #return [i for i in self.citations if i.getTypeOfContent() == TYPE_BOOK]
+
 
     def getAllConferencePapers(self):
         curDic = self.getCurrentDictOfCitations()
         return {i:curDic[i] for i in curDic if curDic[i].getTypeOfContent() == TYPE_CONFERENCE_PAPER}
         #return [i for i in self.citations if i.getTypeOfContent() == TYPE_CONFERENCE_PAPER]
 
+
     def __getAlphaNumeric(self, string):
         newStr = ""
-
-        detagged=""
-
+        detagged = ""
         inTag = False
 
         for i in string:
@@ -389,8 +448,8 @@ class CitationManager():
                 newStr+=i
         return newStr
 
-    def getMLAFormattedListString(self, citationList=None, filtersEnabled=False, alphabetical=True):
 
+    def getMLAFormattedListString(self, citationList=None, filtersEnabled=False, alphabetical=True):
         listString = []
 
         if citationList:
@@ -413,7 +472,6 @@ class CitationManager():
 
 
     def getAPAFormattedListString(self, citationList=None, filtersEnabled=False, alphabetical=True):
-
         listString = []
 
         if citationList:
@@ -435,10 +493,7 @@ class CitationManager():
         return "\n".join(listString)
 
 
-
-
     def getIEEEFormattedListString(self, citationList=None, filtersEnabled=False, alphabetical=True):
-
         listString = []
 
         if citationList:
@@ -452,21 +507,18 @@ class CitationManager():
 
         countCites = 0
         # Sort IEEE Citations alphabetically
-        if alphabetical:
-            for i in sorted(citations, key=lambda x: self.__getAlphaNumeric(x)):
-                countCites += 1
-                listString.append("[%d] %s"%(countCites,i))
-        else:
-            for i in citations:
-                countCites += 1
-                listString.append("[%d] %s"%(countCites,i))
+        for i in sorted(citations, key=lambda x: self.__getAlphaNumeric(x)) if alphabetical else citations:
+            countCites += 1
+            listString.append(f"[{countCites}] {i}")
+        #if alphabetical:
+        #    for i in sorted(citations, key=lambda x: self.__getAlphaNumeric(x)):
+        #        countCites += 1
+        #        listString.append("[%d] %s"%(countCites,i))
+        #else:
+        #    for i in citations:
+        #        countCites += 1
+        #        listString.append("[%d] %s"%(countCites,i))
         return "\n".join(listString)
-
-
-
-
-
-
 
 
 ###################################################################################
@@ -483,8 +535,10 @@ class Citation():
 
         self.citationIsSet=False
 
+
     def isCitationSet(self):
         return self.citationIsSet
+
 
     def setCitationInfoByDictionary(self, citationDict):
         self.setTypeOfContent(citationDict[TYPE])
@@ -502,7 +556,7 @@ class Citation():
             self.citationIsSet=False
             LabeledWidgetsDict[TITLE].setWarningOn()
             LabeledWidgetsDict[TITLE].setNoteOn()
-            self.output("<font color=%s>Warning:</font> Title <i>must</i> be set. Record not added to citations.<br>" % (WARNING_COLOR)) 
+            self.output(f"<font color={WARNING_COLOR}>Warning:</font> Title <i>must</i> be set. Record not added to citations.<br>") 
             failed=True
 
 
@@ -516,7 +570,6 @@ class Citation():
             cleanCity=""
             cleanSpaceStr = " ".join(citationDict[PBCTY].split(",")).replace("  "," ")
 
-
             while cleanSpaceStr.endswith(' '):
                 cleanSpaceStr = cleanSpaceStr[0:-1]
                 
@@ -524,7 +577,7 @@ class Citation():
                 if i in AcceptableNameChars:
                     cleanCity+=str(i)
 
-            self.output("<b><font color=%s>*Note:</font></b> Publishing City (%s) should be in format \"City, State Abbr\"<br>" % (YIELD_COLOR,cleanCity.title()),append=True)
+            self.output(f"<b><font color={YIELD_COLOR}>*Note:</font></b> Publishing City ({cleanCity.title()}) should be in format \"City, State Abbr\"<br>",append=True)
 
             LabeledWidgetsDict[PBCTY].setNoteOn()
             self.citationDict[PBCTY]=cleanCity.title()
@@ -542,8 +595,7 @@ class Citation():
         self.setAccessDateByString(citationDict[ACCDT])
         self.setURL(citationDict[URL])
 
-        if failed:
-            return
+        if failed: return
 
         self.citationIsSet = True
 
@@ -551,6 +603,7 @@ class Citation():
         #    if self.previousDict != self.citationDict:
         #self.output("Changes made to record: %s"%(self.getTitle()),append=True)
         self.previousDict = {i:self.citationDict[i] for i in self.citationDict}
+
 
     def getCitationStringForDB(self):
         citationPropertyList = []
@@ -606,13 +659,16 @@ class Citation():
     def clearCitationInformation(self):
         self.citationDict = generateEmptyCitationDictionary()
 
+
     def getCitationDictionary(self):
         return self.citationDict
+
 
     def getTypeOfContent(self, numeric=False):
         if numeric:
             return {i[1]:i[0] for i in CONTENT_TYPE.items()}[self.citationDict[TYPE]]
         return self.citationDict[TYPE]
+
 
     def setTypeOfContent(self, typeOfContent):
         #print(typeOfContent)
@@ -623,18 +679,22 @@ class Citation():
             assert(typeOfContent in CONTENT_TYPE.values())
             self.citationDict[TYPE] = typeOfContent
 
+
     def getTitle(self):
         return self.citationDict[TITLE]
+
 
     def setTitle(self, title):
         assert(title != "")
         self.citationIsSet = True
         self.citationDict[TITLE] = str(title)
 
+
     def getAuthors(self):
         if self.citationDict:
             return self.citationDict[AUTHT]
         return {0: {LNAME: "", FNAME: "", MINIT: ""}}
+
 
     def addAuthor(self, lastname, firstname="", middleinit=""):
         authDict = self.citationDict[AUTHT]
@@ -645,11 +705,13 @@ class Citation():
 
         self.setAuthors()
 
+
     def removeAuthorByIndex(self, index):
         assert(len(self.citationDict[AUTHT]) > 1)
         assert(index in self.citationDict[AUTHT])
         self.citationDict[AUTHT].pop(index)
         self.setAuthors()
+
 
     def setAuthors(self, authors=None):
         '''
@@ -679,33 +741,42 @@ class Citation():
         
         self.citationDict[AUTHT] = newAuthorDict
 
+
     def __cleanName(self, name):
-        tempName=""
-        for i in name:
-            if i in AcceptableNameChars:
-                tempName+=i
-        return tempName
+        return "".join([i for i in name if i in AcceptableNameChars])
+        #for i in name:
+        #    if i in AcceptableNameChars:
+        #        tempName+=i
+        #return tempName
+
 
     def getTopAuthor(self):
         return self.citationDict[AUTHT][0]
 
+
     def getNumberOfAuthors(self):
         return len(self.citationDict[AUTHT])
+
 
     def getAuthorByIndex(self, index):
         assert(0 <= index <= self.getNumberOfAuthors())
         return self.citationDict[AUTHT][index]
 
+
     def getAuthorFirstNameByIndex(self, index=0):
         return self.getAuthorByIndex(index)[FNAME]
+
 
     def getAuthorLastNameByIndex(self, index=0):
         return self.getAuthorByIndex(index)[LNAME]
 
+
     def getAuthorMiddleInitialByIndex(self, index=0):
         return self.getAuthorByIndex(index)[MINIT]
 
+
     def isTitleInCitation(self, titleString, exactMatch = False):
+        # Can be improved?
         if exactMatch:
             if titleString.upper() == self.citationDict[TITLE].upper():
                 return True
@@ -716,7 +787,6 @@ class Citation():
 
 
     def isAuthorInCitation(self, lastname=None, firstname=None, middleinit=None, exactMatch=False, returnAuthors=False):
-
         # Make sure at least one of the name fields is filled in
         assert([lastname, firstname, middleinit] != [None, None, None])
 
@@ -724,7 +794,7 @@ class Citation():
         authDict={i:{LNAME:self.citationDict[AUTHT][i][LNAME], FNAME:self.citationDict[AUTHT][i][FNAME], MINIT:self.citationDict[AUTHT][i][MINIT]} for i in self.citationDict[AUTHT]}
 
         authDictKeys = list(authDict.keys())
-        authorsFound = False
+        authorsFound = False  # Never accessed
                
         # Check each name for a match
         for nameIDSet in [[lastname, LNAME], [firstname, FNAME], [middleinit, MINIT]]:
@@ -749,31 +819,36 @@ class Citation():
         if returnAuthors:
             return authDict
 
-
-        if len(authDict) > 0:
-            return True
-        else:
-            return False
+        return len(authDict) > 0
+        #if len(authDict) > 0:
+        #    return True
+        #else:
+        #    return False
         
 
     def getVolume(self):
         return self.citationDict[VOLUM]
+
 
     def setVolume(self, volume):
         if volume != "":
             assert(int(volume))
         self.citationDict[VOLUM] = str(volume)
 
+
     def getIssue(self):
         return self.citationDict[ISSUE]
+
 
     def setIssue(self, issue):
         if issue != "":
             assert(int(issue))
         self.citationDict[ISSUE] = str(issue)
 
+
     def getPages(self):
         return self.citationDict[PAGES]
+
 
     def setPages(self, pages): 
         pages = str(pages)
@@ -813,8 +888,10 @@ class Citation():
 
         self.citationDict[PAGES] = finalPageString
 
+
     def getPublication(self):
         return self.citationDict[PBLCA]
+
 
     def setPublication(self, publication):
         publicationAcceptableChars = AcceptableNameChars + "."
@@ -825,13 +902,16 @@ class Citation():
     def getPublisher(self):
         return self.citationDict[PBLSH]
 
+
     def setPublisher(self, publisher):
         publisherAcceptableChars = AcceptableNameChars + "."
         publisher = "".join([i for i in str(publisher) if i in publisherAcceptableChars])
         self.citationDict[PBLSH] = publisher
 
+
     def getPublishingCity(self):
         return self.citationDict[PBCTY]
+
 
     def setPublishingCity(self, city, allowWOState=False):
         if city == "":
@@ -849,10 +929,8 @@ class Citation():
             city[0]="".join([i for i in city[0] if i in AcceptableNameChars])
 
             if allowWOState and len(city) == 1:
-                self.citationDict[PBCTY]="%s"%(city[0].title())
+                self.citationDict[PBCTY]=f"{city[0].title()}"
                 return
-
-                
 
             # Removes spaces and unnecessary characters
             city[1]="".join([i.upper() for i in city[1] if i.isalpha()])
@@ -861,24 +939,28 @@ class Citation():
             assert (len(city[1]) == 2)
 
             # Set publishing city to "City, ST" format
-            self.citationDict[PBCTY]="%s, %s"%(city[0].title(), city[1])
+            self.citationDict[PBCTY]=f"{city[0].title()}, {city[1]}"
             
 
     def getURL(self):
         return self.citationDict[URL]
+
 
     def setURL(self, newURL):
         acceptableURLChars = [i for i in AcceptableNameChars + "0123456789:/?_=" if i != " "]
         newURL = "".join([i for i in newURL if i in acceptableURLChars])
         self.citationDict[URL] = newURL
 
+
     def getPublishedYear(self):
         return self.citationDict[PBLYR]
 
+
     def setPublishedYear(self, publishedYear):
-        if publishedYear not in [0,'']:
+        if publishedYear not in [0, '']:
             assert(1450 <= int(publishedYear) <= datetime.date.today().year)
         self.citationDict[PBLYR] = str(publishedYear)
+
 
     def __cleanDateString(self, datestring):
         # print("CLEAN DATESTRING", datestring)
@@ -909,12 +991,15 @@ class Citation():
         if int(datestring[0]) == 2 and int(datestring[1]) == 29:
             # Century leap years only happen for centuries that are
             # multiples of 400.
-            if int(datestring[2]) % 100 == 0:
-                assert int(datestring[2])%400 == 0, "%s is not a leap year!"%(datestring[2])
-            else:
-                assert int(datestring[2])%4 == 0, "%s is not a leap year!"%(datestring[2])
+            assert int(datestring[2]) % (400 if int(
+                datestring[2]) % 100 == 0 else 4) == 0, "%s is not a leap year!" % (datestring[2])
+            #if int(datestring[2]) % 100 == 0:
+            #    assert int(datestring[2])%400 == 0, "%s is not a leap year!"%(datestring[2])
+            #else:
+            #    assert int(datestring[2])%4 == 0, "%s is not a leap year!"%(datestring[2])
 
         return "/".join([i for i in datestring])
+
 
     def __generateDateString(self, month='00', day='00', year='00'):
         month = str(month)
@@ -932,55 +1017,72 @@ class Citation():
         print("YMD", year, month, day)
 
         return self.__cleanDateString("%s/%s/%s"%(month,day,year))
- 
+
+
     def getPublishingDate(self):
         return self.citationDict[PBLDT]
 
+
     def setPublishingDateByString(self, datestring):
-        if datestring:
-            self.citationDict[PBLDT] = self.__cleanDateString(datestring)
-        else:
-            self.citationDict[PBLDT] = ""
+        self.citationDict[PBLDT] = self.__cleanDateString(datestring) if datestring else ""
+        #if datestring:
+        #    self.citationDict[PBLDT] = self.__cleanDateString(datestring)
+        #else:
+        #    self.citationDict[PBLDT] = ""
+
 
     def setPublishingDate(self, month='00', day='00', year='0000'):
         self.citationDict[PBLDT] = self.__generateDateString(month, day, year)
 
+
     def getAccessDate(self):
         return self.citationDict[ACCDT]
+
 
     def setAccessDateByString(self, datestring):
         self.citationDict[ACCDT] = self.__cleanDateString(datestring)
 
+
     def setAccessDate(self, month, day, year):
         self.citationDict[ACCDT] = self.__generateDateString(month, day, year)
+
 
     def getPublishingDateMonth(self):
         return self.getPublishingDate().split('/')[0]
 
+
     def getPublishingDateMonthAbbreviation(self):
         return DATE_MONTH_ABBREVIATION[int(self.getPublishingDate().split('/')[0])]
+
 
     def getPublishingDateMonthFull(self):
         return DATE_MONTH_FULL[int(self.getPublishingDate().split('/')[0])]
 
+
     def getPublishingDateDay(self):
         return self.getPublishingDate().split('/')[1]
-    
+
+
     def getPublishingDateYear(self):
         return self.getPublishingDate().split('/')[2]
+
 
     def getAccessDateMonth(self):
         return self.getAccessDate().split('/')[0]
 
+
     def getAccessDateMonthAbbreviation(self):
         return DATE_MONTH_ABBREVIATION[int(self.getAccessDate().split('/')[0])]
+
 
     def getAccessDateMonthFull(self):
         return DATE_MONTH_FULL[int(self.getAccessDate().split('/')[0])]
 
+
     def getAccessDateDay(self):
         return self.getAccessDate().split('/')[1]
-    
+
+
     def getAccessDateYear(self):
         return self.getAccessDate().split('/')[2]
 
@@ -1059,6 +1161,7 @@ class Citation():
 
         return authstring
 
+
     def __getMLAPublishingDateFormat(self):
         newDateString = ""
         
@@ -1073,7 +1176,6 @@ class Citation():
             else:
                 return ""
 
-
             if month != " ":
                 if day not in [" ", "0 "]:
                     newDateString += day
@@ -1082,6 +1184,7 @@ class Citation():
             newDateString += year
 
         return newDateString
+
 
     def __getMLAAccessDateFormat(self):
         newDateString = ""
@@ -1102,14 +1205,18 @@ class Citation():
     def __formatItalic(self, string):
         return "<i>" + string + "</i>"
 
+
     def __formatBold(self, string):
         return "<b>" + string + "</b>"
+
 
     def __formatUnderline(self, string):
         return "<u>" + string + "</u>"
 
+
     def __formatInQuotes(self, string):
         return "\"" + string + "\""
+
 
     def getMLAFormat(self):
         MLA_AUTHORS = self.__getMLAAuthors()
@@ -1117,7 +1224,6 @@ class Citation():
         
         if not MLA_TITLE:
             MLA_TITLE = ""
-        
 
         MLA_VOLUME = self.citationDict[VOLUM]
         if MLA_VOLUME: 
@@ -1128,8 +1234,6 @@ class Citation():
         MLA_PUBLICATION = self.citationDict[PBLCA]
         MLA_PUBLISHER = self.citationDict[PBLSH]
         MLA_PUBLICATION_CITY = self.citationDict[PBCTY]
-
-
 
         if MLA_PUBLISHER:
             if MLA_PUBLICATION:
@@ -1147,8 +1251,6 @@ class Citation():
         if MLA_PUBLICATION_CITY:
             MLA_PUBLICATION_CITY += ", "
 
-
-
         MLA_PAGES = self.citationDict[PAGES]
 
         MLA_PUBLICATIONDATE = self.__getMLAPublishingDateFormat()
@@ -1164,8 +1266,6 @@ class Citation():
             MLA_URL = ""
             MLA_ACCESSDATE = ""
 
-
-        
            
         ############################################################################
         #                           MLA BOOK FORMATTING
@@ -1207,6 +1307,7 @@ class Citation():
 
             finalStringList=[MLA_AUTHORS, MLA_TITLE, MLA_VOLUME, MLA_ISSUE, MLA_PUBLICATION_CITY, MLA_PUBLICATION, MLA_PUBLISHER, MLA_PUBLICATIONDATE, MLA_PAGES, MLA_URL, MLA_ACCESSDATE]
 
+
         ############################################################################
         #                   MLA CONFERENCE PAPER FORMATTING
         ############################################################################
@@ -1224,6 +1325,7 @@ class Citation():
 
 
         return "".join(finalStringList)
+
 
     def __getAPAAuthors(self):
         authtable = self.citationDict[AUTHT]
@@ -1401,10 +1503,6 @@ class Citation():
             else:
                 useList = [i for i in [APA_TITLE, APA_ISSVOL, APA_PAGES,APA_PUBLICATIONYEAR, APA_PUBLISHER] if i]
                 return "".join(useList)
-            
-     
-
-
 
 ########IF TYPE is ARTICLE
         elif APA_TYPE == TYPE_ARTICLE:
@@ -1448,8 +1546,6 @@ class Citation():
             if APA_URL:
                 APA_URL = " " + self.__formatBold(APA_URL)
 
-
-
             if APA_AUTHORS:
                 useList = [i for i in [APA_AUTHORS, APA_PUBLICATIONYEAR, APA_TITLE, APA_PUBLICATION, APA_ISSVOL, APA_PAGES, APA_URL] if i]
                 return "".join(useList)
@@ -1475,11 +1571,8 @@ class Citation():
                         APA_CON_DATE += " " + str(int(APA_PUBLICATIONDAY))
                 APA_CON_DATE = " (%s)."%APA_CON_DATE
 
-
-
             if not APA_TITLE:
                 APA_TITLE = ""
-
 
             APA_TITLE = self.__formatItalic(APA_TITLE)+" [Paper presentation]"
 
@@ -1511,7 +1604,6 @@ class Citation():
                 return "".join(useList)
 
 
-
     def __getIEEEAuthors(self):
         authtable = self.citationDict[AUTHT]
         authstring = ''
@@ -1521,6 +1613,7 @@ class Citation():
             fname = authtable[0][FNAME]
             minit = authtable[0][MINIT]
 
+            # Could be improved
             if lname+fname+minit != "":
                 if fname:
                     authstring += fname[0] + "."
@@ -1544,6 +1637,7 @@ class Citation():
             fname = authtable[0][FNAME]
             minit = authtable[0][MINIT]
 
+            # Could be improved
             if lname+fname+minit != "":
                 if fname:
                     authstring += fname[0] + "."
@@ -1575,6 +1669,7 @@ class Citation():
                 fname = authtable[i][FNAME]
                 minit = authtable[i][MINIT]
 
+                # Could be improved
                 if lname+fname+minit != "":
                     authstring += " "
                     if fname:
@@ -1594,7 +1689,6 @@ class Citation():
             authstring += ""
 
         return authstring
-
 
 
     def getIEEEFormat(self):
@@ -1642,10 +1736,6 @@ class Citation():
         IEEE_ACCESS_DATE_STRING += IEEE_ACCESS_YEAR
         IEEE_ACCESS_DATE_STRING = "Accessed: "+IEEE_ACCESS_DATE_STRING+"."
 
-
-
-
-
         IEEE_URL = self.getURL()
 
         if IEEE_URL:
@@ -1653,8 +1743,6 @@ class Citation():
 
         if not IEEE_TITLE:
             IEEE_TITLE = ""
-
-        
 
         if IEEE_TYPE == TYPE_BOOK:
             print("\n\n__________________________________________")
@@ -1667,6 +1755,7 @@ class Citation():
                 suffix=''
 
                 # Suffixes to end numbers with (1st, 2nd, 3rd, 17th, 101st, etc.)
+                # Could be improved
                 if 4 <= int(IEEE_ISSUE) <= 20:
                     suffix = 'th'
                 elif int(IEEE_ISSUE)%10 == 1:
@@ -1688,7 +1777,6 @@ class Citation():
             if IEEE_AUTHORS:
                 finalStr += IEEE_AUTHORS + ", "
 
-
             finalStr += self.__formatItalic(IEEE_TITLE)+", "
 
             if IEEE_VOLUME:
@@ -1705,11 +1793,7 @@ class Citation():
 
             return finalStr
             
-
-                
-            
         if IEEE_TYPE == TYPE_ARTICLE:
-
             finalStr = ""
 
             if IEEE_AUTHORS:
@@ -1772,7 +1856,6 @@ class Citation():
 
             if IEEE_CITY:
                 finalStr += ", " + IEEE_CITY
-
                 
             if IEEE_PAGES:
                 if "-" in IEEE_PAGES or "," in IEEE_PAGES:
@@ -1797,21 +1880,13 @@ class Citation():
             else:
                 finalStr += IEEE_PUBDATE_YEAR + ". "
 
-
             if IEEE_URL:
                 finalStr += IEEE_URL + " " + IEEE_ACCESS_DATE_STRING
 
             #print(finalStr)
             return finalStr
-        
 
 
-            
-
-            
-
- 
-            
 mainCiteManager = CitationManager()
 #mainCiteManager.readInDatabaseFromFile(template=True)
 #mainCiteManager.readInDatabaseFromFile()
